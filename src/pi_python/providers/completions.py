@@ -35,7 +35,7 @@ from ..messages import (
 )
 from ..models import LEVELS, ModelCatalog, ModelInfo
 from ..provider import ModelEvent, ModelRequest
-from ..stream import event_contract
+from ..stream import event_contract, parse_tool_call_arguments
 from ..tools import invoke
 from ..transcript import (
     render_system_update,
@@ -1092,15 +1092,7 @@ class OpenAICompletionsProvider(RemoteProvider):
                     # A call without arguments; Pi parses "" as {}.
                     yield ModelEvent.toolcall("{}", position)
                     raw = "{}"
-                try:
-                    parsed = json.loads(raw)
-                except ValueError as exc:
-                    raise ProviderProtocolError(
-                        f"Tool call {item.name} has incomplete or invalid JSON arguments"
-                    ) from exc
-                if not isinstance(parsed, dict):
-                    raise ProviderProtocolError("Tool arguments must be an object")
-                item.arguments = parsed
+                item.arguments, item.arguments_error = parse_tool_call_arguments(raw)
             yield ModelEvent.boundary("end", position, deepcopy(item))
         cancel.raise_if_cancelled()
         if not finished and not compat["supportsFinishReason"]:

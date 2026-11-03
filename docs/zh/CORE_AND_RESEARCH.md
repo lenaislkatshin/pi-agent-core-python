@@ -51,7 +51,7 @@ core.Agent 可以传 hooks=core.Hooks(...)，也可以直接传 finish_turn 等�
 - timeout_ms、max_retries、max_retry_delay_ms 覆盖单次 HTTP 请求的传输设置。timeout_ms=0 关闭超时，max_retry_delay_ms=0 关闭重试等待上限；不影响其他请求。WebSocket 超时用于建连和读取，回退 HTTP 时保留请求配置。没有增加网络请求已被接受后的自动重放或模型流重试。
 - on_payload、on_response、on_provider_stream_event 接收 value、model。单参数旧回调通过签名适配继续支持；回调内部抛出 TypeError 后不会换一种签名再次执行。
 
-ModelInfo 的 dataclass 序列化现在包含 headers 和采样默认值；使用严格模型记录解析器的应用需要接受这些字段。消息/事件历史继续遵守此前 schema 4/3、2/1 的读写规则。ProxyProvider 仍由代理服务管理模型和请求策略，不在客户端应用直接 Provider 的配置规则。
+ModelInfo 的 dataclass 序列化现在包含 headers 和采样默认值；使用严格模型记录解析器的应用需要接受这些字段。消息/事件历史继续遵守此前 schema 4/3、2/1 的读写规则。带 `arguments_error` 的工具调用只有认识这个字段的读取器才能解码。ProxyProvider 仍由代理服务管理模型和请求策略，不在客户端应用直接 Provider 的配置规则。
 
 ## 保留的边界和验证范围
 

@@ -253,23 +253,6 @@ async def test_server_error_is_retried_before_streaming():
         ([chunk({}, "content_filter")], "Provider finish_reason: content_filter"),
         ([chunk({"content": "cut"})], "Stream ended without finish_reason"),
         ([{"error": {"message": "model overloaded", "code": 503}}], "model overloaded"),
-        (
-            [
-                chunk(
-                    {
-                        "tool_calls": [
-                            {
-                                "index": 0,
-                                "id": "c1",
-                                "function": {"name": "f", "arguments": '{"a": '},
-                            }
-                        ]
-                    }
-                ),
-                chunk({}, "length"),
-            ],
-            "incomplete or invalid JSON arguments",
-        ),
     ],
 )
 async def test_stream_failures_become_error_events(chunks, expected):

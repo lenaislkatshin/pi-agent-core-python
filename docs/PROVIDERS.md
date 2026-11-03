@@ -221,7 +221,7 @@ result = agent.prompt_sync("Introduce yourself in one sentence")
 - Tools work only if the server supports tool calling. For example, vLLM must be started with `--enable-auto-tool-choice` and the `--tool-call-parser` for the model.
 
 Differences from upstream:
-- The final tool arguments must be complete, valid JSON, or the turn is recorded as failed; upstream repairs them leniently. As a result, a tool call cut off by the length limit raises an error here.
+- Final tool arguments are parsed as strict JSON; upstream repairs them leniently first. Arguments that are still invalid are stored in `ToolCall.arguments_error`, the tool does not run, and the error goes back to the model. A tool call cut off by the length limit is not executed either.
 - A tool call with no arguments gets a `"{}"` delta.
 - A missing tool-call ID is generated (`call_<hex>`).
 - Malformed data chunks raise an error; upstream coerces them.

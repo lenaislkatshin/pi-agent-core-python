@@ -53,7 +53,7 @@ The following changes affect both APIs:
 - Request options timeout_ms, max_retries and max_retry_delay_ms override the HTTP transport settings. Zero timeout disables the timeout; zero max_retry_delay_ms disables the retry-delay cap. Other requests retain their transport settings. WebSocket timeout covers opening and reads; HTTP fallback receives the same options. This does not add replay retries after network acceptance or model-stream failure.
 - on_payload/on_response/on_provider_stream_event receive `(value, model)`. One-argument callbacks remain supported through a signature-based migration bridge. A callback is never rerun after raising TypeError.
 
-`ModelInfo` now includes headers and sampling defaults in dataclass serialization. Update strict model-record serializers before adopting those fields. Existing message schemas 4/3 and event schemas 2/1 retain the previously documented read/write rules. ProxyProvider retains its separate server-owned protocol and does not resolve direct-provider configuration locally.
+`ModelInfo` now includes headers and sampling defaults in dataclass serialization. Update strict model-record serializers before adopting those fields. Existing message schemas 4/3 and event schemas 2/1 retain the previously documented read/write rules. A tool call that carries `arguments_error` can only be decoded by a reader that knows this field. ProxyProvider retains its separate server-owned protocol and does not resolve direct-provider configuration locally.
 
 ## Remaining Python boundaries
 

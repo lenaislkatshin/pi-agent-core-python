@@ -510,7 +510,13 @@ async def prepare_tool_call(
     tool: Tool | None, outcome: ToolOutcome, context: ToolContext, before: Callable | None = None
 ) -> None:
     if tool is None:
-        outcome.result = error_result("unknown_tool", f"Unknown tool: {outcome.call.name}")
+        outcome.result = error_result("unknown_tool", f"Tool {outcome.call.name} not found")
+        return
+    if outcome.call.arguments_error is not None:
+        outcome.result = error_result(
+            "invalid_arguments",
+            f'Invalid arguments for tool "{outcome.call.name}": {outcome.call.arguments_error}',
+        )
         return
     try:
         args = deepcopy(outcome.original_arguments)
@@ -522,12 +528,20 @@ async def prepare_tool_call(
         outcome.prepared_arguments = deepcopy(args)
         # Name each problem by its path; the full schema would only bloat the model's context.
         problems = [
-            f"{error.json_path}: {error.message}"
+            f"  - {error.json_path.removeprefix('$.') if error.json_path != '$' else 'root'}: "
+            f"{error.message}"
             for error in schema_validator(tool.input_schema).iter_errors(args)
         ]
         if problems:
-            more = f" (and {len(problems) - 5} more)" if len(problems) > 5 else ""
-            raise ValueError("; ".join(problems[:5]) + more)
+            more = [f"  (and {len(problems) - 5} more)"] if len(problems) > 5 else []
+            received = json.dumps(args, ensure_ascii=False, indent=2)
+            outcome.result = error_result(
+                "invalid_arguments",
+                f'Validation failed for tool "{outcome.call.name}":\n'
+                + "\n".join(problems[:5] + more)
+                + f"\n\nReceived arguments:\n{received}",
+            )
+            return
     except Exception as exc:
         outcome.result = error_result("invalid_arguments", f"{type(exc).__name__}: {exc}")
         return
@@ -619,7 +633,7 @@ async def run_tool_call(
             return outcome
         outcome.execution_status = "failed"
         outcome.error = f"{type(exc).__name__}: {exc}"
-        outcome.result = error_result("tool_error", outcome.error)
+        outcome.result = error_result("tool_error", str(exc) or type(exc).__name__)
         outcome.raw_result = deepcopy(outcome.result)
     try:
         result = deepcopy(outcome.raw_result)

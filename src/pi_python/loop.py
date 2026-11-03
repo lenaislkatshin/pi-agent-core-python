@@ -457,7 +457,10 @@ async def run_loop(run: Run, initial: list[Message]) -> tuple[str, str]:
                         arguments=outcome.original_arguments,
                     )
                     outcome.result = error_result(
-                        "truncated", "Tool call not executed: output length limit"
+                        "truncated",
+                        f'Tool call "{outcome.call.name}" was not executed: the response hit '
+                        "the output token limit, so its arguments may be truncated. Re-issue "
+                        "the tool call with complete arguments.",
                     )
                     await run.end_tool(outcome)
                     await run.commit_outcome(outcome)

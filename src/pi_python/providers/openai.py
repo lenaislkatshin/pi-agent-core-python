@@ -35,7 +35,7 @@ from ..transcript import (
     with_request_tools,
 )
 from ..tools import invoke
-from ..stream import event_contract
+from ..stream import event_contract, parse_tool_call_arguments
 from .common import RemoteProvider, normalize_usage, transform_messages
 from .transport import WebSocketLink, stream_error
 from ..identity import apply_identity
@@ -92,15 +92,14 @@ def response_block(item: dict[str, Any]) -> TextContent | ThinkingContent | Tool
             ThinkingContent(text, json.dumps(item, separators=(",", ":"), ensure_ascii=False))
         )
     elif kind == "function_call":
-        arguments = json.loads(item["arguments"])
-        if not isinstance(arguments, dict):
-            raise ProviderProtocolError("Tool arguments must be an object")
+        arguments, arguments_error = parse_tool_call_arguments(item["arguments"])
         blocks.append(
             ToolCall(
                 item["call_id"] + "|" + item["id"],
                 item["name"],
                 arguments,
                 namespace=item.get("namespace"),
+                arguments_error=arguments_error,
             )
         )
     else:

@@ -64,6 +64,7 @@ class ToolCall:
     arguments: dict[str, Any]
     thought_signature: str | None = None
     namespace: str | None = None
+    arguments_error: str | None = None
     type: Literal["tool_call"] = field(default="tool_call", init=False)
 
 
@@ -157,6 +158,7 @@ def message_to_dict(message: Message) -> dict[str, Any]:
         "text_signature",
         "thought_signature",
         "namespace",
+        "arguments_error",
         "api",
         "provider_thinking_level",
         "response_model",
@@ -230,13 +232,22 @@ def _blocks(values: Any, tools: bool = False, images: bool = False) -> list:
             )
         elif b.get("type") == "tool_call" and tools:
             if (
-                set(b) - {"type", "id", "name", "arguments", "thought_signature", "namespace"}
+                set(b)
+                - {
+                    "type",
+                    "id",
+                    "name",
+                    "arguments",
+                    "thought_signature",
+                    "namespace",
+                    "arguments_error",
+                }
                 or not {"id", "name", "arguments"} <= b.keys()
             ):
                 raise MessageValidationError("Invalid tool call fields")
             if not b["id"] or not b["name"] or not isinstance(b["arguments"], dict):
                 raise MessageValidationError("Invalid tool call ID, name or arguments")
-            for key in ("thought_signature", "namespace"):
+            for key in ("thought_signature", "namespace", "arguments_error"):
                 if b.get(key) is not None:
                     _text(b[key], key)
             result.append(
@@ -246,6 +257,7 @@ def _blocks(values: Any, tools: bool = False, images: bool = False) -> list:
                     b["arguments"],
                     b.get("thought_signature"),
                     b.get("namespace"),
+                    b.get("arguments_error"),
                 )
             )
         else:

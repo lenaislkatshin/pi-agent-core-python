@@ -15,6 +15,23 @@ from .messages import AssistantMessage, TextContent, ThinkingContent, ToolCall, 
 from .provider import ModelEvent
 
 
+def parse_tool_call_arguments(text: str | None) -> tuple[dict[str, Any], str | None]:
+    """Parse the finished arguments text; malformed text is reported, never partly kept.
+
+    Returns `(arguments, arguments_error)`. The error includes the received text so tool
+    validation can hand the problem back to the model, as Pi's parseToolCallArguments does.
+    """
+    if not text or not text.strip():
+        return {}, None
+    try:
+        parsed = json.loads(text)
+        if not isinstance(parsed, dict):
+            raise ValueError("Tool arguments must be a JSON object")
+    except ValueError as exc:
+        return {}, f"{exc}\n\nReceived arguments:\n{text}"
+    return parsed, None
+
+
 def partial_json(value: str) -> dict:
     """Best-effort UI preview only. Final arguments always use strict JSON parsing."""
     try:
@@ -190,11 +207,11 @@ async def checked_events(
                     raise ProviderProtocolError("Tool identity changed")
                 # Anthropic streams an empty input_json_delta for a tool without arguments.
                 if event.index in arguments and arguments[event.index].strip():
-                    try:
-                        assembled = json.loads(arguments[event.index])
-                    except ValueError as exc:
-                        raise ProviderProtocolError("Incomplete tool arguments") from exc
-                    if assembled != new.arguments:
+                    assembled, invalid = parse_tool_call_arguments(arguments[event.index])
+                    if invalid is not None:
+                        if new.arguments_error is None:
+                            raise ProviderProtocolError("Incomplete tool arguments")
+                    elif assembled != new.arguments:
                         raise ProviderProtocolError("Tool delta/end mismatch")
             partial.content[event.index] = deepcopy(new)
             closed.add(event.index)

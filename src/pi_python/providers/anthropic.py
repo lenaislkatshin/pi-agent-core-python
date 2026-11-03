@@ -6,7 +6,6 @@ from ..cancellation import CancelToken
 from ..provider import ModelRequest
 from ..messages import ToolDeclaration, now
 from typing import Any
-import json
 import re
 from copy import deepcopy
 from ..errors import ConfigurationError, ProviderProtocolError, UnsupportedCapabilityError
@@ -33,7 +32,7 @@ from ..transcript import (
     with_request_tools,
 )
 from ..tools import invoke
-from ..stream import event_contract
+from ..stream import event_contract, parse_tool_call_arguments
 from .common import RemoteProvider, normalize_usage, transform_messages
 from .transport import stream_error
 from ..identity import apply_identity
@@ -654,9 +653,9 @@ class AnthropicProvider(RemoteProvider):
                         raise ProviderProtocolError("Invalid content block stop")
                     closed_blocks.add(index)
                     if index in arguments and arguments[index]:
-                        blocks[index].arguments = json.loads(arguments[index])
-                        if not isinstance(blocks[index].arguments, dict):
-                            raise ProviderProtocolError("Tool arguments must be an object")
+                        blocks[index].arguments, blocks[index].arguments_error = (
+                            parse_tool_call_arguments(arguments[index])
+                        )
                     yield ModelEvent.boundary("end", positions[index], blocks[index])
                 elif kind == "message_delta":
                     usage.update(event.get("usage", {}))

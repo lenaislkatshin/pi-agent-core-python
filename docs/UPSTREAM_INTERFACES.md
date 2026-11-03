@@ -33,7 +33,7 @@
 - Python 的 snake_case、消息/枚举映射和 Unix 秒时间戳仍保留。队列模式同时接受官方 one-at-a-time 与旧 one_at_a_time。
 - core state 的字段名称对应官方，但仍是副本；没有引入对内部消息的任意原地修改。研究 API 继续提供配置更新、RunResult、同步调用、普通函数工具、应用工具批次、预算与插件。
 - 两层仍共用严格输入/输出检查、状态复制、Python Task 取消、清理期限和未知结果处理。这些是 [已有设计差异](../compat/COVERAGE.md)，不能算成已消除的偏差。
-- core.Tool 提供 label、parameters 和官方对应执行参数；Python 的 on_update 为异步回调。没有实现 durable replay，不能把 replay 标记当作可恢复执行保证。ToolCall.argumentsError 和宽容最终 JSON 处理仍未移植，现有严格解析策略不变。
+- core.Tool 提供 label、parameters 和官方对应执行参数；Python 的 on_update 为异步回调。没有实现 durable replay，不能把 replay 标记当作可恢复执行保证。最终工具参数不合法时记入 `ToolCall.arguments_error`，由工具校验把错误返回给模型，对应 Pi 1.5 的 `argumentsError`。Pi 的 `repairJson` 没有移植，解析仍是严格 JSON。
 - ProxyProvider 继续遵循代理服务自己的请求合同，不套用直接 Provider 的本地模型配置解析。
 - 未移植完整 UI、持久任务、全部供应商及 TypeScript 开放自定义消息类型。请求身份保持 pi-python 品牌和默认无 attribution，不冒用官方应用身份。
 

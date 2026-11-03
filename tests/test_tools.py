@@ -374,7 +374,7 @@ def test_deep_schema_and_long_validation_errors_are_reported_compactly():
     )
     text = outcome.result.content[0].text
     assert outcome.result.error_code == "invalid_arguments" and len(text) < 300
-    assert "$.field0: 1 is not of type 'string'" in text and "description" not in text
+    assert "  - field0: 1 is not of type 'string'" in text and "description" not in text
 
 
 def test_schema_nesting_limit_is_counted_before_any_recursion():
